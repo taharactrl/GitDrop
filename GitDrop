@@ -1,0 +1,86 @@
+#!/bin/zsh
+
+USER=tahara
+DOMAIN=taharactrl.iobb.net
+#DOMAIN=toshusai.sc.ctrl.titech.ac.jp
+ClientGitDropPATH=~/GitDrop
+ServerGitDropPATH=/home/tahara/GitDrop.git
+#ServerGitDropPATH=/home/dazai/tahara/GitDrop.git
+TMP=~/.gitdropcommit.tmp
+LOG=~/.gitdrop.log
+
+while getopts u:d:p:t: OPT
+do
+    case ${OPT} in
+	u) 
+	    USER=${OPTARG}
+	    ;;
+	d) 
+	    DOMAIN=${OPTARG}
+	    ;;
+	p) 
+	    ServerGitDropPATH=${OPTARG}
+	    ;;
+	t)
+	    ClientGitDropPATH=${OPTARG}
+	    ;;
+    esac
+done
+
+if [ ! -d $ClientGitDropPATH ]; then
+    cd ${ClientGitDropPATH%%GitDrop}
+    git clone ssh://${USER}@${DOMAIN}${ServerGitDropPATH}
+fi
+
+while :
+do
+    if [ -z "`ps aux | grep git | grep -v grep | grep -v GitDrop`" ]; then
+	TIME=$(date "+%Y%m%d%H%M%S")
+	echo "updated" > $TMP
+	echo "cd $ClientGitDropPATH"
+	cd $ClientGitDropPATH
+
+	ping -c 1 -W 1 $DOMAIN > /dev/null
+	if [ $? = 0 ];then
+	    echo "git pull"
+	    git pull > $LOG
+	fi
+
+	echo "git add ."
+	git add . >> $LOG
+	echo "git commit -a -m \"update\""
+	git commit -a -m "updated" >> $TMP
+	cat $TMP >> $LOG
+	cat $TMP | grep "nothing to commit" | grep -v grep > /dev/null
+	if [ $? != 0 ]; then
+	    git commit --amend -m "`cat $TMP`" > /dev/null
+	    echo "git tag update$TIME" > /dev/null
+	    git tag update$TIME > /dev/null
+	fi
+
+	ping -c 1 -W 1 $DOMAIN > /dev/null
+	if [ $? = 0 ];then
+	    echo "git push ssh://${USER}@${DOMAIN}${ServerGitDropPATH} master"
+	    git push ssh://${USER}@${DOMAIN}${ServerGitDropPATH} master >> $LOG
+	fi
+
+	cat $LOG | grep "git gc" | grep -v grep > /dev/null
+	if [ $? = 0 ]; then
+	    echo "git gc"
+	    git gc 
+	fi
+
+	rm -f $TMP $LOG
+
+    fi
+    
+    echo "done!"
+
+    ping -c 1 -W 1 $DOMAIN > /dev/null
+    if [ $? = 0 ];then
+	sleep 60
+    else
+	sleep 5
+    fi
+done
+
