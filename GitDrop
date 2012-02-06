@@ -1,11 +1,9 @@
 #!/bin/zsh
 
-USER=tahara
-DOMAIN=taharactrl.iobb.net
-#DOMAIN=toshusai.sc.ctrl.titech.ac.jp
-ClientGitDropPATH=~/GitDrop
-ServerGitDropPATH=/home/tahara/GitDrop.git
-#ServerGitDropPATH=/home/dazai/tahara/GitDrop.git
+USER=username
+DOMAIN=your_server_domain
+ClientGitDropPATH=your_local_gitdrop_path
+ServerGitDropPATH=your_server_gitdrop+path
 TMP=~/.gitdropcommit.tmp
 LOG=~/.gitdrop.log
 
